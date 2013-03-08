@@ -38,6 +38,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.mahout.cf.taste.common.TopK;
 import org.apache.mahout.cf.taste.hadoop.EntityEntityWritable;
 import org.apache.mahout.cf.taste.hadoop.TasteHadoopUtils;
+import org.apache.mahout.cf.taste.hadoop.item.RecommenderJob;
 import org.apache.mahout.cf.taste.hadoop.preparation.PreparePreferenceMatrixJob;
 import org.apache.mahout.common.AbstractJob;
 import org.apache.mahout.common.HadoopUtil;
@@ -107,6 +108,10 @@ public final class ItemSimilarityJob extends AbstractJob {
     addOption("minPrefsPerUser", "mp", "ignore users with less preferences than this "
         + "(default: " + DEFAULT_MIN_PREFS_PER_USER + ')', String.valueOf(DEFAULT_MIN_PREFS_PER_USER));
     addOption("booleanData", "b", "Treat input as without pref values", String.valueOf(Boolean.FALSE));
+
+    addOption(RecommenderJob.MIGRATE_USER_ID,"muid","Migrate alphanumeric user IDs into longs",Boolean.FALSE.toString());
+    addOption(RecommenderJob.MIGRATE_ITEM_ID,"miid","Migrate alphanumeric item IDs into longs",Boolean.FALSE.toString());
+
     addOption("threshold", "tr", "discard item pairs with a similarity value below this", false);
 
     Map<String,List<String>> parsedArgs = parseArguments(args);
@@ -135,7 +140,9 @@ public final class ItemSimilarityJob extends AbstractJob {
         "--maxPrefsPerUser", String.valueOf(maxPrefsPerUser),
         "--minPrefsPerUser", String.valueOf(minPrefsPerUser),
         "--booleanData", String.valueOf(booleanData),
-        "--tempDir", getTempPath().toString(),
+        "--migrateUserID",String.valueOf(Boolean.valueOf(getOption(RecommenderJob.MIGRATE_USER_ID))),
+        "--migrateItemID",String.valueOf(Boolean.valueOf(getOption(RecommenderJob.MIGRATE_ITEM_ID))),
+          "--tempDir", getTempPath().toString(),
       });
     }
 

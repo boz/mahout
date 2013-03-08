@@ -63,6 +63,9 @@ public class PreparePreferenceMatrixJob extends AbstractJob {
     addOption("booleanData", "b", "Treat input as without pref values", Boolean.FALSE.toString());
     addOption("ratingShift", "rs", "shift ratings by this value", "0.0");
 
+    addOption(RecommenderJob.MIGRATE_USER_ID,"muid","Migrate alphanumeric user IDs into longs",Boolean.FALSE.toString());
+    addOption(RecommenderJob.MIGRATE_ITEM_ID,"miid","Migrate alphanumeric item IDs into longs",Boolean.FALSE.toString());
+
     Map<String, List<String>> parsedArgs = parseArguments(args);
     if (parsedArgs == null) {
       return -1;
@@ -92,6 +95,10 @@ public class PreparePreferenceMatrixJob extends AbstractJob {
                                    VectorWritable.class,
                                    SequenceFileOutputFormat.class);
     toUserVectors.getConfiguration().setBoolean(RecommenderJob.BOOLEAN_DATA, booleanData);
+
+    toUserVectors.getConfiguration().setBoolean(RecommenderJob.MIGRATE_USER_ID,Boolean.valueOf(getOption(RecommenderJob.MIGRATE_USER_ID)));
+    toUserVectors.getConfiguration().setBoolean(RecommenderJob.MIGRATE_ITEM_ID,Boolean.valueOf(getOption(RecommenderJob.MIGRATE_ITEM_ID)));
+
     toUserVectors.getConfiguration().setInt(ToUserVectorsReducer.MIN_PREFERENCES_PER_USER, minPrefsPerUser);
     toUserVectors.getConfiguration().set(ToEntityPrefsMapper.RATING_SHIFT, String.valueOf(ratingShift));
     succeeded = toUserVectors.waitForCompletion(true);

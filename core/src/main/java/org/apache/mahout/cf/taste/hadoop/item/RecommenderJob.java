@@ -93,6 +93,9 @@ public final class RecommenderJob extends AbstractJob {
 
   public static final String BOOLEAN_DATA = "booleanData";
 
+  public static final String MIGRATE_USER_ID = "migrateUserID";
+  public static final String MIGRATE_ITEM_ID = "migrateItemID";
+
   private static final int DEFAULT_MAX_SIMILARITIES_PER_ITEM = 100;
   private static final int DEFAULT_MAX_PREFS_PER_USER = 1000;
   private static final int DEFAULT_MIN_PREFS_PER_USER = 1;
@@ -109,6 +112,10 @@ public final class RecommenderJob extends AbstractJob {
     addOption("filterFile", "f", "File containing comma-separated userID,itemID pairs. Used to exclude the item from "
             + "the recommendations for that user (optional)", null);
     addOption("booleanData", "b", "Treat input as without pref values", Boolean.FALSE.toString());
+
+    addOption(RecommenderJob.MIGRATE_USER_ID,"muid","Migrate alphanumeric user IDs into longs",Boolean.FALSE.toString());
+    addOption(RecommenderJob.MIGRATE_ITEM_ID,"miid","Migrate alphanumeric item IDs into longs",Boolean.FALSE.toString());
+
     addOption("maxPrefsPerUser", "mxp",
             "Maximum number of preferences considered per user in final recommendation phase",
             String.valueOf(UserVectorSplitterMapper.DEFAULT_MAX_PREFS_PER_USER_CONSIDERED));
@@ -163,6 +170,8 @@ public final class RecommenderJob extends AbstractJob {
         "--maxPrefsPerUser", String.valueOf(maxPrefsPerUserInItemSimilarity),
         "--minPrefsPerUser", String.valueOf(minPrefsPerUser),
         "--booleanData", String.valueOf(booleanData),
+        "--migrateUserID",String.valueOf(Boolean.valueOf(getOption(RecommenderJob.MIGRATE_USER_ID))),
+        "--migrateItemID",String.valueOf(Boolean.valueOf(getOption(RecommenderJob.MIGRATE_ITEM_ID))),
         "--tempDir", getTempPath().toString(),
       });
 

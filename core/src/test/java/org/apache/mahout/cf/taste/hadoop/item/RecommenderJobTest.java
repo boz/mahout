@@ -34,13 +34,11 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.mahout.cf.taste.hadoop.EntityPrefWritable;
-import org.apache.mahout.cf.taste.hadoop.RecommendedItemsWritable;
-import org.apache.mahout.cf.taste.hadoop.TasteHadoopUtils;
-import org.apache.mahout.cf.taste.hadoop.ToItemPrefsMapper;
+import org.apache.mahout.cf.taste.hadoop.*;
 import org.apache.mahout.cf.taste.impl.TasteTestCase;
 import org.apache.mahout.cf.taste.impl.common.FastIDSet;
 import org.apache.mahout.cf.taste.impl.recommender.GenericRecommendedItem;
+import org.apache.mahout.cf.taste.model.IDMigrator;
 import org.apache.mahout.cf.taste.recommender.RecommendedItem;
 import org.apache.mahout.common.Pair;
 import org.apache.mahout.common.iterator.FileLineIterable;
@@ -127,6 +125,27 @@ public class RecommenderJobTest extends TasteTestCase {
     setField(mapper, "booleanData", true);
     mapper.map(new LongWritable(123L), new Text("12,34"), context);
     mapper.map(new LongWritable(456L), new Text("56,78"), context);
+
+    EasyMock.verify(context);
+  }
+
+  /**
+   * tests {@link ToItemPrefsMapper} with userID migration.
+   */
+  @Test
+  public void testToItemPrefsMapperUserIDMigration() throws Exception {
+    Mapper<LongWritable,Text, VarLongWritable,VarLongWritable>.Context context =
+        EasyMock.createMock(Mapper.Context.class);
+
+    context.write(new VarLongWritable(ToEntityPrefsMapper.migrator.toLongID("A")),new EntityPrefWritable(34L,5f));
+    context.write(new VarLongWritable(ToEntityPrefsMapper.migrator.toLongID("B")),new EntityPrefWritable(78L,6f));
+    EasyMock.replay(context);
+
+    ToItemPrefsMapper mapper = new ToItemPrefsMapper();
+    setField(mapper,"migrateUserID",true);
+
+    mapper.map(new LongWritable(123L), new Text("A,34,5"), context);
+    mapper.map(new LongWritable(456L), new Text("B,78,6"), context);
 
     EasyMock.verify(context);
   }

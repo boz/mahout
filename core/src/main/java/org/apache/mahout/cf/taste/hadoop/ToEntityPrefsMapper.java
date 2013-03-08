@@ -22,6 +22,8 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.mahout.cf.taste.hadoop.item.RecommenderJob;
+import org.apache.mahout.cf.taste.impl.model.MemoryIDMigrator;
+import org.apache.mahout.cf.taste.model.IDMigrator;
 import org.apache.mahout.math.VarLongWritable;
 
 import java.io.IOException;
@@ -40,6 +42,11 @@ public abstract class ToEntityPrefsMapper extends
   private final boolean itemKey;
   private float ratingShift;
 
+  private boolean migrateUserID;
+  private boolean migrateItemID;
+
+  public static IDMigrator migrator = new MemoryIDMigrator();
+
   ToEntityPrefsMapper(boolean itemKey) {
     this.itemKey = itemKey;
   }
@@ -50,6 +57,9 @@ public abstract class ToEntityPrefsMapper extends
     booleanData = jobConf.getBoolean(RecommenderJob.BOOLEAN_DATA, false);
     transpose = jobConf.getBoolean(TRANSPOSE_USER_ITEM, false);
     ratingShift = Float.parseFloat(jobConf.get(RATING_SHIFT, "0.0"));
+
+    migrateUserID = jobConf.getBoolean(RecommenderJob.MIGRATE_USER_ID,false);
+    migrateItemID = jobConf.getBoolean(RecommenderJob.MIGRATE_USER_ID,false);
   }
 
   @Override
@@ -57,8 +67,8 @@ public abstract class ToEntityPrefsMapper extends
                   Text value,
                   Context context) throws IOException, InterruptedException {
     String[] tokens = DELIMITER.split(value.toString());
-    long userID = Long.parseLong(tokens[0]);
-    long itemID = Long.parseLong(tokens[1]);
+    long userID = parseUserID(tokens[0]);
+    long itemID = parseItemID(tokens[1]);
     if (itemKey ^ transpose) {
       // If using items as keys, and not transposing items and users, then users are items!
       // Or if not using items as keys (users are, as usual), but transposing items and users,
@@ -73,6 +83,14 @@ public abstract class ToEntityPrefsMapper extends
       float prefValue = tokens.length > 2 ? Float.parseFloat(tokens[2]) + ratingShift : 1.0f;
       context.write(new VarLongWritable(userID), new EntityPrefWritable(itemID, prefValue));
     }
+  }
+
+  public long parseUserID(final String string) {
+    return migrateUserID ? migrator.toLongID(string) : Long.parseLong(string);
+  }
+
+  public long parseItemID(final String string) {
+    return migrateItemID ? migrator.toLongID(string) : Long.parseLong(string);
   }
 
 }
