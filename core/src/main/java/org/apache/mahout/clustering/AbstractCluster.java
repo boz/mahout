@@ -312,37 +312,34 @@ public abstract class AbstractCluster implements Cluster {
    * intended to be complete nor usable as an input/output representation
    */
   public static String formatVector(Vector v, String[] bindings) {
-    StringBuilder buf = new StringBuilder();
+    final StringBuilder buf = new StringBuilder();
     if (v instanceof NamedVector) {
       buf.append(((NamedVector) v).getName()).append(" = ");
     }
-    int nzero = 0;
-    Iterator<Vector.Element> iterateNonZero = v.iterateNonZero();
-    while (iterateNonZero.hasNext()) {
-      iterateNonZero.next();
-      nzero++;
-    }
+
+    buf.append('[');
+
     // if vector is sparse or if we have bindings, use sparse notation
-    if (nzero < v.size() || bindings != null) {
-      buf.append('[');
-      for (int i = 0; i < v.size(); i++) {
-        double elem = v.get(i);
-        if (elem == 0.0) {
-          continue;
-        }
-        String label;
-        if (bindings != null && (label = bindings[i]) != null) {
-          buf.append(label).append(':');
+    if (!v.isDense() || bindings != null) {
+
+      final Iterator<Vector.Element> it = v.iterateNonZero();
+
+      while(it.hasNext()) {
+
+        int idx = it.next().index();
+
+        if(bindings != null && idx < bindings.length && bindings[idx] != null) {
+          buf.append(bindings[idx]);
         } else {
-          buf.append(i).append(':');
+          buf.append(idx);
         }
-        buf.append(String.format(Locale.ENGLISH, "%.3f", elem)).append(", ");
+        buf.append(':');
+
+        buf.append(String.format(Locale.ENGLISH, "%.3f",v.get(idx))).append(", ");
       }
     } else {
-      buf.append('[');
-      for (int i = 0; i < v.size(); i++) {
-        double elem = v.get(i);
-        buf.append(String.format(Locale.ENGLISH, "%.3f", elem)).append(", ");
+      for(final Vector.Element element: v) {
+        buf.append(String.format(Locale.ENGLISH, "%.3f", element.get())).append(", ");
       }
     }
     if (buf.length() > 1) {
@@ -351,7 +348,7 @@ public abstract class AbstractCluster implements Cluster {
     buf.append(']');
     return buf.toString();
   }
-  
+
   @Override
   public boolean isConverged() {
     // Convergence has no meaning yet, perhaps in subclasses
